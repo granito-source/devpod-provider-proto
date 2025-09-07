@@ -61,9 +61,12 @@ cmd_find() {
 
 cmd_command() {
     log "command: $1 $2 $3"
-    # DEVCONTAINER_USER
-    # DEVCONTAINER_COMMAND
-    # exec -c devpod
+
+    if [[ $2 != "root" ]]; then
+        kctl exec "$1" -c devpod -i -- su "$2" -c "$3"
+    else
+        kctl exec "$1" -c devpod -i -- sh -c "$3"
+    fi
 }
 
 cmd_start() {
@@ -74,7 +77,7 @@ cmd_start() {
 cmd_stop() {
     log "stop: $1"
 
-    kctl delete pod "$1" --ignore-not-found
+    kctl delete pod "$1" --ignore-not-found --grace-period=10
 }
 
 cmd_run() {
@@ -88,7 +91,7 @@ cmd_run() {
 cmd_delete() {
     log "delete: $1"
 
-    kctl delete pod "$1" --ignore-not-found
+    kctl delete pod "$1" --ignore-not-found --grace-period=10
     kctl delete pvc "$1" --ignore-not-found --grace-period=5
 }
 
@@ -96,7 +99,7 @@ cmd_target_architecture() {
     log "target-architecture"
 
     local arch
-    arch=$(kctl run "${name}-arch" --rm -iq --restart=Never --image="$HELPER_IMAGE" --command -- arch)
+    arch=$(kctl run "$1-arch" --rm -iq --restart=Never --image="$HELPER_IMAGE" --command -- arch)
 
     if [[ $arch == "aarch64" ]]; then
         echo "arm64"
@@ -116,29 +119,30 @@ kctl() {
 KUBECTL_PATH=${KUBECTL_PATH:-kubectl}
 KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE:-"devpod"}
 HELPER_IMAGE=${HELPER_IMAGE:-"alpine:latest"}
-name="devpod-$DEVCONTAINER_ID"
+DEVCONTAINER_USER=${DEVCONTAINER_USER:-"root"}
+workspace="devpod-$DEVCONTAINER_ID"
 
 case "$1" in
     find)
-        cmd_find $name
+        cmd_find "$workspace"
         ;;
     command)
-        cmd_command $name $DEVCONTAINER_USER $DEVCONTAINER_COMMAND
+        cmd_command "$workspace" "$DEVCONTAINER_USER" "$DEVCONTAINER_COMMAND"
         ;;
     start)
-        cmd_start $name
+        cmd_start "$workspace"
         ;;
     stop)
-        cmd_stop $name
+        cmd_stop "$workspace"
         ;;
     run)
-        cmd_run $name
+        cmd_run "$workspace"
         ;;
     delete)
-        cmd_delete $name
+        cmd_delete "$workspace"
         ;;
     target-architecture)
-        cmd_target_architecture
+        cmd_target_architecture "$workspace"
         ;;
     *)
         log "unknown command: $1"
