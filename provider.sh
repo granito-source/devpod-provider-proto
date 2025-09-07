@@ -8,13 +8,7 @@ cmd_find() {
     local pvc
     local pod
 
-    pvc=$(kctl get pvc "$1" --ignore-not-found -o json |
-        jq '{
-            name: .metadata.name,
-            phase: .status.phase,
-            time: .metadata.creationTimestamp,
-            config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
-        }')
+    pvc=$(find_pvc "$1")
     pod=$(kctl get pod "$1" --ignore-not-found -o json |
         jq '{
             phase: .status.phase,
@@ -71,7 +65,43 @@ cmd_command() {
 
 cmd_start() {
     log "start: $1"
-    # create pod
+
+    local pvc
+    pvc=$(find_pvc "$1")
+
+    if [[ -z $pvc ]]; then
+        log "PVC is not found: $1"
+        exit 1
+    fi
+
+    # check workspaceMount and workspaceVolumeMount
+
+    # check and stop if already running
+
+    echo "$pvc" | jq '{
+        apiVersion: "v1",
+        kind: "Pod",
+        metadata: {
+            name: .name
+        },
+        spec: {
+            restartPolicy: "Never",
+            securityContext: {},
+            volumes: [],
+            initContainers: [],
+            containers: [
+                {
+                    name: "devpod",
+                    image: .config.Options.image,
+                    securityContext: {},
+                    resources: {},
+                    volumeMounts: [],
+                    command: [.config.Options.entrypoint],
+                    args: .config.Options.cmd
+                }
+            ]
+        }
+    }' | kctl create -f -
 }
 
 cmd_stop() {
@@ -106,6 +136,16 @@ cmd_target_architecture() {
     else
         echo "$arch"
     fi
+}
+
+find_pvc() {
+    kctl get pvc "$1" --ignore-not-found -o json |
+        jq '{
+            name: .metadata.name,
+            phase: .status.phase,
+            time: .metadata.creationTimestamp,
+            config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
+        }'
 }
 
 log() {
