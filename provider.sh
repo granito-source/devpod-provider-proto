@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-set -eux
+set -eu
 
 log() {
     echo "$@" 1>&2
@@ -12,22 +12,57 @@ find_pod() {
     local pvc
     local pod
 
-    pvc=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" get pvc "$name" --ignore-not-found -o json | jq -r '.status.phase')
-    # ID <- $name
-    # Created <- .metadata.creationTimestamp: "2025-09-02T12:12:52Z"
-    pod=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" get pod "$name" --ignore-not-found -o json | jq -r '.status.phase')
-    # State <- {
-    #   Status <- "exited" | "running"
-    #   StartedAt <-.status.startTime: "2025-08-24T18:55:45Z" | .metadata.creationTimestamp: "2025-09-02T12:12:52Z"
-    # }
-    # Config <- {
-    #   Labels <- .metadata.labels
-    #   WorkingDir <-
-    # }
+    pvc=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" \
+        get pvc "$name" --ignore-not-found -o json |
+        jq '{
+            name: .metadata.name,
+            phase: .status.phase,
+            time: .metadata.creationTimestamp,
+            config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
+        }')
+    pod=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" \
+        get pod "$name" --ignore-not-found -o json |
+        jq '{
+            phase: .status.phase,
+            time: .status.startTime
+        }')
 
-    log "pvc: $pvc, pod: $pod"
+    if [[ -z $pvc ]]; then
+        echo "null"
 
-    echo "null"
+        return
+    fi
+
+    if [[ $(echo "$pvc" | jq -r '.phase') != "Bound" ]]; then
+        echo "null"
+
+        return
+    fi
+
+    if [[ $(echo "$pvc" | jq -r '.config') == "null" ]]; then
+        echo "null"
+
+        return
+    fi
+
+    if [[ -z $pod ]]; then
+        pod='{"phase": "Dead"}'
+    fi
+
+    jq -n "{
+        pvc: $pvc,
+        pod: $pod
+    } | {
+        ID: .pvc.name,
+        Created: .pvc.time,
+        State: {
+            Status: (if .pod.phase == \"Running\" then \"running\" else \"exited\" end),
+            StartedAt: (.pod.time // .pvc.time)
+        },
+        Config: {
+            Labels: .pvc.config.Options.labels | map(capture(\"^(?<key>[^=]+)=(?<value>.*)$\")) | from_entries
+        }
+    }"
 }
 
 do_command() {
@@ -50,6 +85,9 @@ do_stop() {
 do_run() {
     log "run: $DEVCONTAINER_ID"
     # DEVCONTAINER_RUN_OPTIONS (json)
+    # check and create pvc
+    # check and delete pod
+    # create pod
 }
 
 do_delete() {
