@@ -87,8 +87,9 @@ cmd_run() {
 
 cmd_delete() {
     log "delete: $1"
-    # delete pod
-    # delete pvc
+
+    kctl delete pod "$1" --ignore-not-found
+    kctl delete pvc "$1" --ignore-not-found --grace-period=5
 }
 
 cmd_target_architecture() {
