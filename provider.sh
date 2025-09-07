@@ -2,26 +2,20 @@
 
 set -eu
 
-log() {
-    echo "$@" 1>&2
-}
-
 cmd_find() {
     log "find: $1"
 
     local pvc
     local pod
 
-    pvc=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" \
-        get pvc "$1" --ignore-not-found -o json |
+    pvc=$(kctl get pvc "$1" --ignore-not-found -o json |
         jq '{
             name: .metadata.name,
             phase: .status.phase,
             time: .metadata.creationTimestamp,
             config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
         }')
-    pod=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" \
-        get pod "$1" --ignore-not-found -o json |
+    pod=$(kctl get pod "$1" --ignore-not-found -o json |
         jq '{
             phase: .status.phase,
             time: .status.startTime
@@ -79,7 +73,8 @@ cmd_start() {
 
 cmd_stop() {
     log "stop: $1"
-    # delete pod
+
+    kctl delete pod "$1" --ignore-not-found
 }
 
 cmd_run() {
@@ -100,13 +95,21 @@ cmd_target_architecture() {
     log "target-architecture"
 
     local arch
-    arch=$($KUBECTL_PATH run "${name}-arch" --rm -iq --restart=Never --image="$HELPER_IMAGE" --command -- arch)
+    arch=$(kctl run "${name}-arch" --rm -iq --restart=Never --image="$HELPER_IMAGE" --command -- arch)
 
     if [[ $arch == "aarch64" ]]; then
         echo "arm64"
     else
         echo "$arch"
     fi
+}
+
+log() {
+    echo "$@" 1>&2
+}
+
+kctl() {
+    $KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" "$@"
 }
 
 KUBECTL_PATH=${KUBECTL_PATH:-kubectl}
