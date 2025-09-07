@@ -78,7 +78,7 @@ cmd_start() {
 
     # check and stop if already running
 
-    echo "$pvc" | jq '{
+    echo "$pvc" | jq '.name as $name | {
         apiVersion: "v1",
         kind: "Pod",
         metadata: {
@@ -87,7 +87,12 @@ cmd_start() {
         spec: {
             restartPolicy: "Never",
             securityContext: {},
-            volumes: [],
+            volumes: [.config.Options.mounts[] | select(.type == "volume") | {
+                name: .source,
+                persistentVolumeClaim: {
+                    claimName: $name
+                }
+            }],
             initContainers: [],
             containers: [
                 {
@@ -95,7 +100,11 @@ cmd_start() {
                     image: .config.Options.image,
                     securityContext: {},
                     resources: {},
-                    volumeMounts: [],
+                    volumeMounts: [.config.Options.mounts[] | select(.type == "volume") | {
+                        name: .source,
+                        mountPath: .target,
+                        subPath: ("devpod/" + .source)
+                    }],
                     command: [.config.Options.entrypoint],
                     args: .config.Options.cmd
                 }
