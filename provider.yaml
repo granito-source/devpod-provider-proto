@@ -121,23 +121,23 @@ agent:
       - os: linux
         arch: amd64
         path: ./provider.sh
-        checksum: c1c943932715233e82ddbb358fda6cad426c4b3f82987bba88b384dea8a3fcd5
+        checksum: dd534dfb1cb13e6d18c20ba39e32ccaded88aaf818157e550f92b5e13b8e1a74
       - os: linux
         arch: arm64
         path: ./provider.sh
-        checksum: c1c943932715233e82ddbb358fda6cad426c4b3f82987bba88b384dea8a3fcd5
+        checksum: dd534dfb1cb13e6d18c20ba39e32ccaded88aaf818157e550f92b5e13b8e1a74
       - os: darwin
         arch: amd64
         path: ./provider.sh
-        checksum: c1c943932715233e82ddbb358fda6cad426c4b3f82987bba88b384dea8a3fcd5
+        checksum: dd534dfb1cb13e6d18c20ba39e32ccaded88aaf818157e550f92b5e13b8e1a74
       - os: darwin
         arch: arm64
         path: ./provider.sh
-        checksum: c1c943932715233e82ddbb358fda6cad426c4b3f82987bba88b384dea8a3fcd5
+        checksum: dd534dfb1cb13e6d18c20ba39e32ccaded88aaf818157e550f92b5e13b8e1a74
       - os: windows
         arch: amd64
         path: ./provider.sh
-        checksum: c1c943932715233e82ddbb358fda6cad426c4b3f82987bba88b384dea8a3fcd5
+        checksum: dd534dfb1cb13e6d18c20ba39e32ccaded88aaf818157e550f92b5e13b8e1a74
   driver: custom
   custom:
     findDevContainer: '"${K8S_PROVIDER}" find'

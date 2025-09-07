@@ -82,17 +82,19 @@ cmd_start() {
         apiVersion: "v1",
         kind: "Pod",
         metadata: {
-            name: .name
+            name
         },
         spec: {
             restartPolicy: "Never",
             securityContext: {},
-            volumes: [.config.Options.mounts[] | select(.type == "volume") | {
-                name: .source,
-                persistentVolumeClaim: {
-                    claimName: $name
+            volumes: [
+                .config.Options.mounts[] | select(.type == "volume") | {
+                    name: .source,
+                    persistentVolumeClaim: {
+                        claimName: $name
+                    }
                 }
-            }],
+            ],
             initContainers: [],
             containers: [
                 {
@@ -100,13 +102,21 @@ cmd_start() {
                     image: .config.Options.image,
                     securityContext: {},
                     resources: {},
-                    volumeMounts: [.config.Options.mounts[] | select(.type == "volume") | {
-                        name: .source,
-                        mountPath: .target,
-                        subPath: ("devpod/" + .source)
-                    }],
+                    volumeMounts: [
+                        .config.Options.mounts[] | select(.type == "volume") | {
+                            name: .source,
+                            mountPath: .target,
+                            subPath: ("devpod/" + .source)
+                        }
+                    ],
                     command: [.config.Options.entrypoint],
-                    args: .config.Options.cmd
+                    args: .config.Options.cmd,
+                    env: [
+                        .config.Options.env | to_entries[] | {
+                            name: .key,
+                            value
+                        }
+                    ]
                 }
             ]
         }
@@ -198,27 +208,3 @@ case "$1" in
         exit 1
         ;;
 esac
-
-# 21:59:23 info PROVIDER_ID=k8s
-# 21:59:23 info WORKSPACE_PROVIDER=k8s
-# 21:59:23 info KUBERNETES_CONFIG=
-# 21:59:23 info NODE_SELECTOR=
-# 21:59:23 info INACTIVITY_TIMEOUT=
-# 21:59:23 info WORKSPACE_CONTEXT=default
-# 21:59:23 info WORKSPACE_ID=xxx
-# 21:59:23 info WORKSPACE_VOLUME_MOUNT=
-# 21:59:23 info MACHINE_CONTEXT=default
-# 21:59:23 info PROVIDER_CONTEXT=default
-# 21:59:23 info KUBERNETES_NAMESPACE=yashkov
-# 21:59:23 info HELPER_RESOURCES=
-# 21:59:23 info DANGEROUSLY_OVERRIDE_IMAGE=
-# 21:59:23 info STRICT_SECURITY=false
-# 21:59:23 info DOCKERLESS_IMAGE=
-# 21:59:23 info DOCKERLESS_DISABLED=false
-# 21:59:23 info STORAGE_CLASS=
-# 21:59:23 info DISK_SIZE=10Gi
-# 21:59:23 info PVC_ACCESS_MODE=
-# 21:59:23 info DEVPOD_ARCH=arm64
-# 21:59:23 info DEVPOD_OS=darwin
-# 21:59:23 info DEVPOD_DEBUG=true
-# 21:59:23 info DEVPOD_LOG_LEVEL=debug
