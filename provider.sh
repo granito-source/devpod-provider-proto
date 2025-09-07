@@ -6,7 +6,7 @@ log() {
     echo "$@" 1>&2
 }
 
-find_pod() {
+cmd_find() {
     log "find: $DEVCONTAINER_ID"
 
     local pvc
@@ -65,24 +65,24 @@ find_pod() {
     }"
 }
 
-do_command() {
+cmd_command() {
     log "command: $DEVCONTAINER_ID"
     # DEVCONTAINER_USER
     # DEVCONTAINER_COMMAND
     # exec -c devpod
 }
 
-do_start() {
+cmd_start() {
     log "start: $DEVCONTAINER_ID"
     # create pod
 }
 
-do_stop() {
+cmd_stop() {
     log "stop: $DEVCONTAINER_ID"
     # delete pod
 }
 
-do_run() {
+cmd_run() {
     log "run: $DEVCONTAINER_ID"
     # DEVCONTAINER_RUN_OPTIONS (json)
     # check and create pvc
@@ -90,13 +90,13 @@ do_run() {
     # create pod
 }
 
-do_delete() {
+cmd_delete() {
     log "delete: $DEVCONTAINER_ID"
     # delete pod
     # delete pvc
 }
 
-get_arch() {
+cmd_target_architecture() {
     log "target-architecture: $DEVCONTAINER_ID"
 
     local arch
@@ -116,38 +116,31 @@ name="devpod-$DEVCONTAINER_ID"
 
 case "$1" in
     find)
-        find_pod
+        cmd_find
         ;;
     command)
-        do_command
+        cmd_command
         ;;
     start)
-        do_start
+        cmd_start
         ;;
     stop)
-        do_stop
+        cmd_stop
         ;;
     run)
-        do_run
+        cmd_run
         ;;
     delete)
-        do_delete
+        cmd_delete
         ;;
     target-architecture)
-        get_arch
+        cmd_target_architecture
         ;;
     *)
         log "unknown command: $1"
         exit 1
         ;;
 esac
-
-# type ContainerDetails struct {
-# 	ID      string                 `json:"ID,omitempty"`
-# 	Created string                 `json:"Created,omitempty"`
-# 	State   ContainerDetailsState  `json:"State,omitempty"`
-# 	Config  ContainerDetailsConfig `json:"Config,omitempty"`
-# }
 
 # 21:59:23 info PROVIDER_ID=k8s
 # 21:59:23 info WORKSPACE_PROVIDER=k8s
