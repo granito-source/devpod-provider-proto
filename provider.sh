@@ -7,13 +7,13 @@ log() {
 }
 
 cmd_find() {
-    log "find: $DEVCONTAINER_ID"
+    log "find: $1"
 
     local pvc
     local pod
 
     pvc=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" \
-        get pvc "$name" --ignore-not-found -o json |
+        get pvc "$1" --ignore-not-found -o json |
         jq '{
             name: .metadata.name,
             phase: .status.phase,
@@ -21,7 +21,7 @@ cmd_find() {
             config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
         }')
     pod=$($KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" \
-        get pod "$name" --ignore-not-found -o json |
+        get pod "$1" --ignore-not-found -o json |
         jq '{
             phase: .status.phase,
             time: .status.startTime
@@ -66,24 +66,24 @@ cmd_find() {
 }
 
 cmd_command() {
-    log "command: $DEVCONTAINER_ID"
+    log "command: $1 $2 $3"
     # DEVCONTAINER_USER
     # DEVCONTAINER_COMMAND
     # exec -c devpod
 }
 
 cmd_start() {
-    log "start: $DEVCONTAINER_ID"
+    log "start: $1"
     # create pod
 }
 
 cmd_stop() {
-    log "stop: $DEVCONTAINER_ID"
+    log "stop: $1"
     # delete pod
 }
 
 cmd_run() {
-    log "run: $DEVCONTAINER_ID"
+    log "run: $1"
     # DEVCONTAINER_RUN_OPTIONS (json)
     # check and create pvc
     # check and delete pod
@@ -91,13 +91,13 @@ cmd_run() {
 }
 
 cmd_delete() {
-    log "delete: $DEVCONTAINER_ID"
+    log "delete: $1"
     # delete pod
     # delete pvc
 }
 
 cmd_target_architecture() {
-    log "target-architecture: $DEVCONTAINER_ID"
+    log "target-architecture"
 
     local arch
     arch=$($KUBECTL_PATH run "${name}-arch" --rm -iq --restart=Never --image="$HELPER_IMAGE" --command -- arch)
@@ -116,22 +116,22 @@ name="devpod-$DEVCONTAINER_ID"
 
 case "$1" in
     find)
-        cmd_find
+        cmd_find $name
         ;;
     command)
-        cmd_command
+        cmd_command $name $DEVCONTAINER_USER $DEVCONTAINER_COMMAND
         ;;
     start)
-        cmd_start
+        cmd_start $name
         ;;
     stop)
-        cmd_stop
+        cmd_stop $name
         ;;
     run)
-        cmd_run
+        cmd_run $name
         ;;
     delete)
-        cmd_delete
+        cmd_delete $name
         ;;
     target-architecture)
         cmd_target_architecture
