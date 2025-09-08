@@ -1,0 +1,10 @@
+{
+  "image": "mcr.microsoft.com/devcontainers/base:ubuntu",
+  "mounts": [
+    {
+      "source": "home",
+      "target": "/home/vscode",
+      "type": "volume"
+    }
+  ]
+}
