@@ -124,19 +124,19 @@ agent:
         checksum: @hash@
       - os: linux
         arch: arm64
-        path: @prefix@/src/devpod-provider-proto/provider.sh
+        path: @prefix@/devpod-provider-proto/provider.sh
         checksum: @hash@
       - os: darwin
         arch: amd64
-        path: @prefix@/src/devpod-provider-proto/provider.sh
+        path: @prefix@/devpod-provider-proto/provider.sh
         checksum: @hash@
       - os: darwin
         arch: arm64
-        path: @prefix@/src/devpod-provider-proto/provider.sh
+        path: @prefix@/devpod-provider-proto/provider.sh
         checksum: @hash@
       - os: windows
         arch: amd64
-        path: @prefix@/src/devpod-provider-proto/provider.sh
+        path: @prefix@/devpod-provider-proto/provider.sh
         checksum: @hash@
   driver: custom
   custom:
