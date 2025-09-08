@@ -175,6 +175,8 @@ kctl() {
     $KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" "$@"
 }
 
+# main()
+
 KUBECTL_PATH=${KUBECTL_PATH:-kubectl}
 KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE:-"devpod"}
 HELPER_IMAGE=${HELPER_IMAGE:-"alpine:latest"}
