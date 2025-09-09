@@ -20,7 +20,7 @@ $(TARGET)/provider.sh: provider.sh | $(TARGET)
 	$(CP) $< $@
 	$(CHMOD) a+x $@
 
-$(TARGET)/provider.yaml: provider.yaml | $(TARGET)/provider.sh $(TARGET)
+$(TARGET)/provider.yaml: provider.yaml $(TARGET)/provider.sh | $(TARGET)
 	$(SED) -e 's#@prefix@#$(PREFIX)#g' -e "s#@hash@#`sha256 -q '$(TARGET)/provider.sh'`#g" $< >$@
 
 clean:
