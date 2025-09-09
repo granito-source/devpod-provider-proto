@@ -120,23 +120,23 @@ agent:
     K8S_PROVIDER:
       - os: linux
         arch: amd64
-        path: @prefix@/devpod-provider-proto/provider.sh
+        path: @prefix@/provider.sh
         checksum: @hash@
       - os: linux
         arch: arm64
-        path: @prefix@/devpod-provider-proto/provider.sh
+        path: @prefix@/provider.sh
         checksum: @hash@
       - os: darwin
         arch: amd64
-        path: @prefix@/devpod-provider-proto/provider.sh
+        path: @prefix@/provider.sh
         checksum: @hash@
       - os: darwin
         arch: arm64
-        path: @prefix@/devpod-provider-proto/provider.sh
+        path: @prefix@/provider.sh
         checksum: @hash@
       - os: windows
         arch: amd64
-        path: @prefix@/devpod-provider-proto/provider.sh
+        path: @prefix@/provider.sh
         checksum: @hash@
   driver: custom
   custom:
@@ -144,7 +144,7 @@ agent:
     commandDevContainer: '"${K8S_PROVIDER}" command'
     startDevContainer: '"${K8S_PROVIDER}" start'
     stopDevContainer: '"${K8S_PROVIDER}" stop'
-    runDevContainer: '"${K8S_PROVIDER}" stop'
+    runDevContainer: '"${K8S_PROVIDER}" run'
     deleteDevContainer: '"${K8S_PROVIDER}" delete'
     targetArchitecture: '"${K8S_PROVIDER}" target-architecture'
     canReprovision: true

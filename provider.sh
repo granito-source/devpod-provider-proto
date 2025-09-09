@@ -71,7 +71,8 @@ cmd_start() {
 
     if [[ -z $pvc ]]; then
         log "PVC is not found: $1"
-        exit 1
+
+        return
     fi
 
     # check workspaceMount and workspaceVolumeMount
