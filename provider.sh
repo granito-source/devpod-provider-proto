@@ -11,17 +11,15 @@ cmd_find() {
     if [[ -z $pvc ]]; then
         echo "null"
 
-        return
-    fi
-
-    if [[ $(echo "$pvc" | jq -r '.phase') != "Bound" ]]; then
-        echo "null"
+        log "PVC is not found: $1"
 
         return
     fi
 
     if [[ $(echo "$pvc" | jq -r '.config') == "null" ]]; then
         echo "null"
+
+        log "PVC does not have DevPod annotation: $1"
 
         return
     fi
@@ -117,7 +115,6 @@ pvc_find() {
 
     kctl get pvc "$1" --ignore-not-found -o json | jq '{
         name: .metadata.name,
-        phase: .status.phase,
         time: .metadata.creationTimestamp,
         config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
     }'
