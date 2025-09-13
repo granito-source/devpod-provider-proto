@@ -138,7 +138,6 @@ pvc_find() {
 pvc_create() {
     log "pvc: create: $1"
 
-    # STORAGE_CLASS
     # PVC_ANNOTATIONS
     echo "$1" | jq "{
         apiVersion: \"v1\",
@@ -154,7 +153,7 @@ pvc_create() {
             }
         },
         spec: {
-            storageClassName: \"longhorn\",
+            storageClassName: (if \"$STORAGE_CLASS\" == \"\" then null else \"$STORAGE_CLASS\" end),
             volumeMode: \"Filesystem\",
             accessModes: [\"$PVC_ACCESS_MODE\"],
             resources: {
@@ -190,8 +189,8 @@ pod_create() {
         metadata: {
             name,
             labels: {
-                \"devpod.sh/created\": \"true\",
-                \"devpod.sh/workspace-uid\": .config.Options.uid
+                "devpod.sh/created": "true",
+                "devpod.sh/workspace-uid": .config.Options.uid
             }
         },
         spec: {
@@ -253,6 +252,7 @@ KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE:-"devpod"}
 HELPER_IMAGE=${HELPER_IMAGE:-"alpine:latest"}
 DEVCONTAINER_USER=${DEVCONTAINER_USER:-"root"}
 DISK_SIZE=${DISK_SIZE:="10Gi"}
+STORAGE_CLASS=${STORAGE_CLASS:-""}
 PVC_ACCESS_MODE=${PVC_ACCESS_MODE:-"ReadWriteOnce"}
 workspace="devpod-$DEVCONTAINER_ID"
 
