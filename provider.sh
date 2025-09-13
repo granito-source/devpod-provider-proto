@@ -3,17 +3,10 @@
 set -eu
 
 cmd_find() {
-    log "find: $1"
+    log "command: find: $1"
 
     local pvc
-    local pod
-
-    pvc=$(find_pvc "$1")
-    pod=$(kctl get pod "$1" --ignore-not-found -o json |
-        jq '{
-            phase: .status.phase,
-            time: .status.startTime
-        }')
+    pvc=$(pvc_find "$1")
 
     if [[ -z $pvc ]]; then
         echo "null"
@@ -32,6 +25,9 @@ cmd_find() {
 
         return
     fi
+
+    local pod
+    pod=$(pod_find "$1")
 
     if [[ -z $pod ]]; then
         pod='{"phase": "Dead"}'
@@ -54,7 +50,7 @@ cmd_find() {
 }
 
 cmd_command() {
-    log "command: $1 $2 $3"
+    log "command: command: $1 $2 $3"
 
     if [[ $2 != "root" ]]; then
         kctl exec "$1" -c devpod -i -- su "$2" -c "$3"
@@ -64,10 +60,10 @@ cmd_command() {
 }
 
 cmd_start() {
-    log "start: $1"
+    log "command: start: $1"
 
     local pvc
-    pvc=$(find_pvc "$1")
+    pvc=$(pvc_find "$1")
 
     if [[ -z $pvc ]]; then
         log "PVC is not found: $1"
@@ -75,11 +71,77 @@ cmd_start() {
         return
     fi
 
-    # check workspaceMount and workspaceVolumeMount
+    # XXX: check workspaceMount and workspaceVolumeMount
 
-    # check and stop if already running
+    [[ -n $(pod_find "$1") ]] && pod_delete "$1"
 
-    echo "$pvc" | jq '.name as $name | {
+    pod_create "$pvc"
+}
+
+cmd_stop() {
+    log "command: stop: $1"
+
+    pod_delete "$1"
+}
+
+cmd_run() {
+    log "command: run: $1"
+    # DEVCONTAINER_RUN_OPTIONS (json)
+    # check and create pvc
+    # check and delete pod
+    # create pod
+}
+
+cmd_delete() {
+    log "command: delete: $1"
+
+    pod_delete "$1"
+    pvc_delete "$1"
+}
+
+cmd_target_architecture() {
+    log "command: target-architecture"
+
+    local arch
+    arch=$(kctl run "$1-arch" --rm -iq --restart=Never --image="$HELPER_IMAGE" --command -- arch)
+
+    if [[ $arch == "aarch64" ]]; then
+        echo "arm64"
+    else
+        echo "$arch"
+    fi
+}
+
+pvc_find() {
+    log "pvc: find: $1"
+
+    kctl get pvc "$1" --ignore-not-found -o json | jq '{
+        name: .metadata.name,
+        phase: .status.phase,
+        time: .metadata.creationTimestamp,
+        config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
+    }'
+}
+
+pvc_delete() {
+    log "pvc: delete: $1"
+
+    kctl delete pvc "$1" --ignore-not-found --grace-period=5
+}
+
+pod_find() {
+    log "pod: find: $1"
+
+    kctl get pod "$1" --ignore-not-found -o json | jq '{
+        phase: .status.phase,
+        time: .status.startTime
+    }'
+}
+
+pod_create() {
+    log "pod: create: $1"
+
+    echo "$1" | jq '.name as $name | {
         apiVersion: "v1",
         kind: "Pod",
         metadata: {
@@ -124,48 +186,10 @@ cmd_start() {
     }' | kctl create -f -
 }
 
-cmd_stop() {
-    log "stop: $1"
+pod_delete() {
+    log "pod: delete: $1"
 
     kctl delete pod "$1" --ignore-not-found --grace-period=10
-}
-
-cmd_run() {
-    log "run: $1"
-    # DEVCONTAINER_RUN_OPTIONS (json)
-    # check and create pvc
-    # check and delete pod
-    # create pod
-}
-
-cmd_delete() {
-    log "delete: $1"
-
-    kctl delete pod "$1" --ignore-not-found --grace-period=10
-    kctl delete pvc "$1" --ignore-not-found --grace-period=5
-}
-
-cmd_target_architecture() {
-    log "target-architecture"
-
-    local arch
-    arch=$(kctl run "$1-arch" --rm -iq --restart=Never --image="$HELPER_IMAGE" --command -- arch)
-
-    if [[ $arch == "aarch64" ]]; then
-        echo "arm64"
-    else
-        echo "$arch"
-    fi
-}
-
-find_pvc() {
-    kctl get pvc "$1" --ignore-not-found -o json |
-        jq '{
-            name: .metadata.name,
-            phase: .status.phase,
-            time: .metadata.creationTimestamp,
-            config: (.metadata.annotations."devpod.sh/info" // "null") | fromjson
-        }'
 }
 
 log() {
