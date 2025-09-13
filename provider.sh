@@ -89,7 +89,7 @@ cmd_run() {
     pvc=$(pvc_find "$1")
 
     if [[ -z $pvc ]]; then
-        pvc=$(echo $DEVCONTAINER_RUN_OPTIONS | jq "{
+        pvc=$(echo "$DEVCONTAINER_RUN_OPTIONS" | jq "{
             name: \"$1\",
             config: {
                 WorkspaceID: \"$1\",
@@ -138,34 +138,32 @@ pvc_find() {
 pvc_create() {
     log "pvc: create: $1"
 
-    # DISK_SIZE
     # STORAGE_CLASS
-    # PVC_ACCESS_MODE
     # PVC_ANNOTATIONS
-    echo "$1" | jq '{
-        apiVersion: "v1",
-        kind: "PersistentVolumeClaim",
+    echo "$1" | jq "{
+        apiVersion: \"v1\",
+        kind: \"PersistentVolumeClaim\",
         metadata: {
             name,
             labels: {
-                "devpod.sh/created": "true",
-                "devpod.sh/workspace-uid": .config.Options.uid
+                \"devpod.sh/created\": \"true\",
+                \"devpod.sh/workspace-uid\": .config.Options.uid
             },
             annotations: {
-                "devpod.sh/info": .config | tojson
+                \"devpod.sh/info\": .config | tojson
             }
         },
         spec: {
-            storageClassName: "longhorn",
-            volumeMode: "Filesystem",
-            accessModes: ["ReadWriteOnce"],
+            storageClassName: \"longhorn\",
+            volumeMode: \"Filesystem\",
+            accessModes: [\"$PVC_ACCESS_MODE\"],
             resources: {
                 requests: {
-                    storage: "10Gi"
+                    storage: \"$DISK_SIZE\"
                 }
             }
         }
-    }' | kctl create -f -
+    }" | kctl create -f -
 }
 
 pvc_delete() {
@@ -190,7 +188,11 @@ pod_create() {
         apiVersion: "v1",
         kind: "Pod",
         metadata: {
-            name
+            name,
+            labels: {
+                \"devpod.sh/created\": \"true\",
+                \"devpod.sh/workspace-uid\": .config.Options.uid
+            }
         },
         spec: {
             restartPolicy: "Never",
@@ -251,6 +253,7 @@ KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE:-"devpod"}
 HELPER_IMAGE=${HELPER_IMAGE:-"alpine:latest"}
 DEVCONTAINER_USER=${DEVCONTAINER_USER:-"root"}
 DISK_SIZE=${DISK_SIZE:="10Gi"}
+PVC_ACCESS_MODE=${PVC_ACCESS_MODE:-"ReadWriteOnce"}
 workspace="devpod-$DEVCONTAINER_ID"
 
 case "$1" in
