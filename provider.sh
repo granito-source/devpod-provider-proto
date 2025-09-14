@@ -159,13 +159,13 @@ pvc_create() {
                 }
             }
         }
-    }" | kctl create -f -
+    }" | kctl create -f - 1>&2
 }
 
 pvc_delete() {
     log "pvc: delete: $1"
 
-    kctl delete pvc "$1" --ignore-not-found --grace-period=5
+    kctl delete pvc "$1" --ignore-not-found --grace-period=5 1>&2
 }
 
 pod_find() {
@@ -237,13 +237,13 @@ pod_create() {
                 }
             ]
         }
-    }' | kctl create -f -
+    }' | kctl create -f - 1>&2
 }
 
 pod_delete() {
     log "pod: delete: $1"
 
-    kctl delete pod "$1" --ignore-not-found --grace-period=10
+    kctl delete pod "$1" --ignore-not-found --grace-period=10 1>&2
 }
 
 log() {
