@@ -9,16 +9,12 @@ cmd_find() {
     pvc=$(pvc_find "$1")
 
     if [[ -z $pvc ]]; then
-        echo "null"
-
         log "PVC is not found: $1"
 
         return
     fi
 
     if [[ $(echo "$pvc" | jq -r '.config') == "null" ]]; then
-        echo "null"
-
         log "PVC does not have DevPod annotation: $1"
 
         return
@@ -66,7 +62,7 @@ cmd_start() {
     if [[ -z $pvc ]]; then
         log "PVC is not found: $1"
 
-        return
+        exit 1
     fi
 
     # XXX: check workspaceMount and workspaceVolumeMount
@@ -138,7 +134,6 @@ pvc_find() {
 pvc_create() {
     log "pvc: create: $1"
 
-    # PVC_ANNOTATIONS
     echo "$1" | jq "{
         apiVersion: \"v1\",
         kind: \"PersistentVolumeClaim\",
