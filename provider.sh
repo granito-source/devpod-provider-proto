@@ -65,8 +65,6 @@ cmd_start() {
         exit 1
     fi
 
-    # XXX: check workspaceMount and workspaceVolumeMount
-
     [[ -n $(pod_find "$1") ]] && pod_delete "$1"
 
     pod_create "$pvc"
@@ -192,6 +190,8 @@ pod_wait() {
 pod_create() {
     log "pod: create: $1"
 
+    # XXX: check workspaceMount and workspaceVolumeMount
+
     echo "$1" | jq '.name as $name | {
         apiVersion: "v1",
         kind: "Pod",
@@ -204,10 +204,9 @@ pod_create() {
         },
         spec: {
             restartPolicy: "Never",
-            securityContext: {},
             volumes: [
-                .config.Options.mounts[] | select(.type == "volume") | {
-                    name: .source,
+                {
+                    name: "devpod",
                     persistentVolumeClaim: {
                         claimName: $name
                     }
@@ -217,15 +216,19 @@ pod_create() {
                 {
                     name: "devpod",
                     image: .config.Options.image,
-                    securityContext: {},
-                    resources: {},
-                    volumeMounts: [
+                    volumeMounts: ([
+                        {
+                            name: "devpod",
+                            mountPath: .config.Options.workspaceMount.target,
+                            subPath: "devpod/0"
+                        }
+                    ] + [
                         .config.Options.mounts[] | select(.type == "volume") | {
-                            name: .source,
+                            name: "devpod",
                             mountPath: .target,
                             subPath: ("devpod/" + .source)
                         }
-                    ],
+                    ]),
                     command: [.config.Options.entrypoint],
                     args: .config.Options.cmd,
                     env: [
