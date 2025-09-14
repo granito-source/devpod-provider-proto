@@ -70,6 +70,7 @@ cmd_start() {
     [[ -n $(pod_find "$1") ]] && pod_delete "$1"
 
     pod_create "$pvc"
+    pod_wait $1 20
 }
 
 cmd_stop() {
@@ -99,6 +100,7 @@ cmd_run() {
     [[ -n $(pod_find "$1") ]] && pod_delete "$1"
 
     pod_create "$pvc"
+    pod_wait $1 20
 }
 
 cmd_delete() {
@@ -175,6 +177,18 @@ pod_find() {
     }'
 }
 
+pod_wait() {
+    log "pod: wait: $1 $2"
+
+    for (( i = 0; i < $2; i++ )); do
+        [[ $(kctl get pod "$1" --ignore-not-found -o json |
+            jq -r '.status.phase') == "Running" ]] && return
+        sleep 1
+    done
+
+    log "pod: wait: $1: aborted after $2 attempts"
+}
+
 pod_create() {
     log "pod: create: $1"
 
@@ -237,12 +251,21 @@ log() {
 }
 
 kctl() {
-    $KUBECTL_PATH --namespace "$KUBERNETES_NAMESPACE" "$@"
+    local -a cmd=("$KUBECTL_PATH")
+
+    [[ -n $KUBERNETES_CONFIG ]] && cmd+=("--kubeconfig=$KUBERNETES_CONFIG")
+    [[ -n $KUBERNETES_CONTEXT ]] && cmd+=("--context=$KUBERNETES_CONTEXT")
+
+    cmd+=("--namespace=$KUBERNETES_NAMESPACE")
+
+    "${cmd[@]}" "$@"
 }
 
 # main()
 
 KUBECTL_PATH=${KUBECTL_PATH:-"kubectl"}
+KUBERNETES_CONFIG=${KUBERNETES_CONFIG:-""}
+KUBERNETES_CONTEXT=${KUBERNETES_CONTEXT:-""}
 KUBERNETES_NAMESPACE=${KUBERNETES_NAMESPACE:-"devpod"}
 HELPER_IMAGE=${HELPER_IMAGE:-"alpine:latest"}
 DEVCONTAINER_USER=${DEVCONTAINER_USER:-"root"}
